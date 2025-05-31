@@ -8,7 +8,7 @@ const userRoutes = require('./routes/userRoutes');
 require('dotenv').config();
 
 const app = express();
-const PORT =  3004;
+const PORT = process.env.PORT || 3004;
 
 
 // Middleware
