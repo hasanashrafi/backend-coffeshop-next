@@ -381,4 +381,227 @@ router.put('/update/:userId', auth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get('/profile', auth, async (req, res) => {
+    try {
+        const users = await readUsers();
+        const user = users.find(u => u.id === req.user.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                createdAt: user.createdAt
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching profile',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.put('/profile', auth, async (req, res) => {
+    try {
+        const { username, email, currentPassword, newPassword } = req.body;
+        const users = await readUsers();
+        const userIndex = users.findIndex(u => u.id === req.user.userId);
+
+        if (userIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const user = users[userIndex];
+        const updates = {};
+
+        // Update username if provided
+        if (username) {
+            const usernameExists = users.some(u => u.username === username && u.id !== user.id);
+            if (usernameExists) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Username already taken'
+                });
+            }
+            updates.username = username;
+        }
+
+        // Update email if provided
+        if (email) {
+            const emailExists = users.some(u => u.email === email && u.id !== user.id);
+            if (emailExists) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Email already taken'
+                });
+            }
+            updates.email = email;
+        }
+
+        // Update password if provided
+        if (currentPassword && newPassword) {
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Current password is incorrect'
+                });
+            }
+            updates.password = await bcrypt.hash(newPassword, 10);
+        }
+
+        // Update user
+        users[userIndex] = {
+            ...user,
+            ...updates
+        };
+
+        await writeUsers(users);
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: {
+                id: user.id,
+                username: updates.username || user.username,
+                email: updates.email || user.email
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error updating profile',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   delete:
+ *     summary: Delete user account
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.delete('/profile', auth, async (req, res) => {
+    try {
+        const { password } = req.body;
+        const users = await readUsers();
+        const userIndex = users.findIndex(u => u.id === req.user.userId);
+
+        if (userIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const user = users[userIndex];
+
+        // Verify password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: 'Password is incorrect'
+            });
+        }
+
+        // Remove user
+        users.splice(userIndex, 1);
+        await writeUsers(users);
+
+        res.json({
+            success: true,
+            message: 'Account deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting account',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router; 
