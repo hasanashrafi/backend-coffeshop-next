@@ -23,6 +23,24 @@ const readProducts = async () => {
  *     responses:
  *       200:
  *         description: List of all products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       price:
+ *                         type: number
  *       500:
  *         description: Server error
  */
@@ -57,6 +75,22 @@ router.get('/', async (req, res) => {
  *     responses:
  *       200:
  *         description: Product details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     price:
+ *                       type: number
  *       404:
  *         description: Product not found
  *       500:

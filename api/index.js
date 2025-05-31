@@ -37,9 +37,6 @@ const swaggerOptions = {
         },
       },
     },
-    security: [{
-      bearerAuth: [],
-    }],
   },
   apis: ['./api/*.js'],
 };
