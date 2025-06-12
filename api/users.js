@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const auth = require('../middleware/auth');
 const fs = require('fs').promises;
 const path = require('path');
+
+// Helper function to generate a simple token
+const generateToken = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
 
 // Helper function to read users from db
 const readUsers = async () => {
@@ -99,13 +102,6 @@ router.post('/signin', async (req, res) => {
             });
         }
 
-        // Generate token
-        const token = jwt.sign(
-            { userId: user.id, email: user.email },
-            process.env.JWT_SECRET || 'your-secret-key',
-            { expiresIn: '24h' }
-        );
-
         // Set CORS headers
         res.header('Access-Control-Allow-Origin', '*');
         res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -116,7 +112,7 @@ router.post('/signin', async (req, res) => {
             success: true,
             message: 'Login successful',
             data: {
-                token,
+                token: user.token,
                 user: {
                     id: user.id,
                     username: user.username,
@@ -219,12 +215,16 @@ router.post('/signup', async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Generate token
+        const token = generateToken();
+
         // Create new user
         const newUser = {
             id: Date.now().toString(),
             username,
             email: email.toLowerCase(),
             password: hashedPassword,
+            token,
             createdAt: new Date().toISOString()
         };
 
@@ -242,6 +242,7 @@ router.post('/signup', async (req, res) => {
             success: true,
             message: 'User created successfully',
             data: {
+                token,
                 user: {
                     id: newUser.id,
                     username: newUser.username,
