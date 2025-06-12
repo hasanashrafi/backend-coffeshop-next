@@ -156,12 +156,6 @@ router.post('/signin', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // Set CORS headers
-        res.header('Access-Control-Allow-Origin', '*');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-        res.header('Access-Control-Allow-Credentials', 'true');
-
         res.json({
             success: true,
             message: 'Login successful',
