@@ -9,21 +9,20 @@ const productRoutes = require('./products');
 const app = express();
 
 // CORS configuration
-const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:10000', '*'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-};
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 
 // Middleware
-app.use(cors(corsOptions));
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
-
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -38,7 +37,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3004',
+        url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:10000',
         description: 'API Server',
       },
     ],

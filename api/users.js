@@ -43,6 +43,7 @@ router.options('*', (req, res) => {
 // Signup route
 router.post('/signup', async (req, res) => {
     try {
+        console.log('Signup request received:', req.body);
         const { username, email, password } = req.body;
 
         // Validate input
@@ -58,7 +59,8 @@ router.post('/signup', async (req, res) => {
 
         // Check if user already exists
         const existingUser = users.find(user =>
-            user.email === email || user.username === username
+            user.email.toLowerCase() === email.toLowerCase() ||
+            user.username.toLowerCase() === username.toLowerCase()
         );
 
         if (existingUser) {
@@ -75,7 +77,7 @@ router.post('/signup', async (req, res) => {
         const newUser = {
             id: Date.now().toString(),
             username,
-            email,
+            email: email.toLowerCase(),
             password: hashedPassword,
             createdAt: new Date().toISOString()
         };
@@ -84,7 +86,12 @@ router.post('/signup', async (req, res) => {
         users.push(newUser);
         await writeUsers(users);
 
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        // Set CORS headers
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+        res.header('Access-Control-Allow-Credentials', 'true');
+
         res.status(201).json({
             success: true,
             message: 'User created successfully',
@@ -109,6 +116,7 @@ router.post('/signup', async (req, res) => {
 // Signin route
 router.post('/signin', async (req, res) => {
     try {
+        console.log('Signin request received:', req.body);
         const { email, password } = req.body;
 
         // Validate input
@@ -121,9 +129,10 @@ router.post('/signin', async (req, res) => {
 
         // Read users from database
         const users = await readUsers();
+        console.log('Users from database:', users);
 
         // Find user
-        const user = users.find(u => u.email === email);
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
         if (!user) {
             return res.status(401).json({
                 success: false,
@@ -147,7 +156,12 @@ router.post('/signin', async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        // Set CORS headers
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+        res.header('Access-Control-Allow-Credentials', 'true');
+
         res.json({
             success: true,
             message: 'Login successful',
