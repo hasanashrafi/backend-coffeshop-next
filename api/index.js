@@ -1,24 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const morgan = require('morgan');
+const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const swaggerJsDoc = require('swagger-jsdoc');
-const userRoutes = require('./users');
+const usersRouter = require('./users');
 const productRoutes = require('./products');
 
 const app = express();
-
-// CORS configuration
-app.use(cors({
-  origin: true, // Allow all origins
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}));
-
-// Middleware
-app.use(express.json());
-app.use(morgan('dev'));
 
 // Swagger configuration
 const swaggerOptions = {
@@ -31,27 +18,41 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000',
+        url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:10000',
         description: 'API server',
       },
     ],
   },
-  apis: ['./api/*.js'],
+  apis: ['./api/*.js'], // Path to the API docs
 };
 
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// Serve Swagger documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
-  swaggerOptions: {
-    persistAuthorization: true,
-  },
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "Coffee Shop API Documentation"
-}));
+// CORS configuration
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Swagger documentation route
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
-app.use('/api/users', userRoutes);
+app.use('/api/users', usersRouter);
 app.use('/api/products', productRoutes);
 
 // Health check endpoint
@@ -65,12 +66,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     success: false,
     message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    error: err.message
   });
 });
 
-// Handle OPTIONS requests
-app.options('*', cors());
+// Start server
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
-// For Vercel serverless functions
 module.exports = app; 
