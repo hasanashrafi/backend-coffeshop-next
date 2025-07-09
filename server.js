@@ -3,21 +3,35 @@ const cors = require('cors');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
-const productRoutes = require('./routes/products');
+const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3004;
 
-// Middleware
+// Robust CORS setup for multiple origins
+const allowedOrigins = [
+  'http://localhost:3000', // Local frontend
+  'https://your-frontend-domain.com' // Add your deployed frontend domain here
+];
+
 const corsOptions = {
-  origin: 'http://localhost:3000', // Change to your frontend's URL if needed
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   optionsSuccessStatus: 204
 };
+
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
