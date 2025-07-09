@@ -6,6 +6,7 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
 require('dotenv').config();
+const connectDB = require('./db/connect');
 
 const app = express();
 const PORT = process.env.PORT || 3004;
@@ -65,7 +66,7 @@ const swaggerOptions = {
       bearerAuth: [],
     }],
   },
-  apis: ['./routes/*.js'],
+  apis: ['./routes/*.js', './controllers/*.js'],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
@@ -85,6 +86,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+connectDB();
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
