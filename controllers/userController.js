@@ -1,33 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const auth = require('../middlewares/auth');
-const fs = require('fs').promises;
-const path = require('path');
-
-// Helper function to read users from db
-const readUsers = async () => {
-    try {
-        const data = await fs.readFile(path.join(__dirname, '../users.json'), 'utf8');
-        return JSON.parse(data).users;
-    } catch (error) {
-        console.error('Error reading users:', error);
-        return [];
-    }
-};
-
-// Helper function to write users to db
-const writeUsers = async (users) => {
-    try {
-        await fs.writeFile(
-            path.join(__dirname, '../users.json'),
-            JSON.stringify({ users }, null, 2),
-            'utf8'
-        );
-    } catch (error) {
-        console.error('Error writing users:', error);
-        throw new Error('Error writing to database');
-    }
-};
+const User = require('../models/User');
 
 /**
  * @swagger
@@ -112,64 +85,20 @@ const writeUsers = async (users) => {
 exports.signup = async (req, res) => {
     try {
         const { username, email, password } = req.body;
-
-        // Validate input
         if (!username || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide all required fields'
-            });
+            return res.status(400).json({ success: false, message: 'Please provide all required fields' });
         }
-
-        // Read existing users
-        const users = await readUsers();
-
-        // Check if user already exists
-        const existingUser = users.find(user =>
-            user.email === email || user.username === username
-        );
-
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                message: 'User already exists'
-            });
+            return res.status(400).json({ success: false, message: 'User already exists' });
         }
-
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 12);
-
-        // Create new user
-        const newUser = {
-            id: Date.now().toString(),
-            username,
-            email,
-            password: hashedPassword,
-            createdAt: new Date().toISOString()
-        };
-
-        // Save user to database
-        users.push(newUser);
-        await writeUsers(users);
-
-        res.status(201).json({
-            success: true,
-            message: 'User created successfully',
-            data: {
-                user: {
-                    id: newUser.id,
-                    username: newUser.username,
-                    email: newUser.email
-                }
-            }
-        });
+        const newUser = new User({ username, email, password: hashedPassword });
+        await newUser.save();
+        res.status(201).json({ success: true, message: 'User created successfully', data: { user: { id: newUser._id, username: newUser.username, email: newUser.email } } });
     } catch (error) {
         console.error('Signup error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating user',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error creating user', error: error.message });
     }
 };
 
@@ -208,62 +137,26 @@ exports.signup = async (req, res) => {
 exports.signin = async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // Validate input
         if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide email and password'
-            });
+            return res.status(400).json({ success: false, message: 'Please provide email and password' });
         }
-
-        // Read users from database
-        const users = await readUsers();
-
-        // Find user
-        const user = users.find(u => u.email === email);
+        const user = await User.findOne({ email });
         if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid credentials'
-            });
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
-
-        // Check password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid credentials'
-            });
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
-
-        // Generate token
         const token = jwt.sign(
-            { userId: user.id, email: user.email },
+            { userId: user._id, email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
-
-        res.json({
-            success: true,
-            message: 'Login successful',
-            data: {
-                token,
-                user: {
-                    id: user.id,
-                    username: user.username,
-                    email: user.email
-                }
-            }
-        });
+        res.json({ success: true, message: 'Login successful', data: { token, user: { id: user._id, username: user.username, email: user.email } } });
     } catch (error) {
         console.error('Signin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error signing in',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error signing in', error: error.message });
     }
 };
 
@@ -325,57 +218,21 @@ exports.updateUser = async (req, res) => {
     try {
         const { userId } = req.params;
         const { username, email } = req.body;
-
-        // Read users from database
-        const users = await readUsers();
-
-        // Check if user exists
-        const userIndex = users.findIndex(u => u.id === userId);
-        if (userIndex === -1) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        // Check if user is authorized
         if (req.user.userId !== userId) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to update this user'
-            });
+            return res.status(403).json({ success: false, message: 'Not authorized to update this user' });
         }
-
-        // Update user
-        const updatedUser = {
-            ...users[userIndex],
-            username: username || users[userIndex].username,
-            email: email || users[userIndex].email,
-            updatedAt: new Date().toISOString()
-        };
-
-        // Save updated user
-        users[userIndex] = updatedUser;
-        await writeUsers(users);
-
-        res.json({
-            success: true,
-            message: 'User updated successfully',
-            data: {
-                user: {
-                    id: updatedUser.id,
-                    username: updatedUser.username,
-                    email: updatedUser.email
-                }
-            }
-        });
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: { username, email, updatedAt: new Date() } },
+            { new: true, runValidators: true }
+        );
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        res.json({ success: true, message: 'User updated successfully', data: { user: { id: updatedUser._id, username: updatedUser.username, email: updatedUser.email } } });
     } catch (error) {
         console.error('Update error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating user',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error updating user', error: error.message });
     }
 };
 
@@ -397,31 +254,13 @@ exports.updateUser = async (req, res) => {
  */
 exports.getProfile = async (req, res) => {
     try {
-        const users = await readUsers();
-        const user = users.find(u => u.id === req.user.userId);
-
+        const user = await User.findById(req.user.userId);
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
-
-        res.json({
-            success: true,
-            data: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                createdAt: user.createdAt
-            }
-        });
+        res.json({ success: true, data: { id: user._id, username: user.username, email: user.email, createdAt: user.createdAt } });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching profile',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error fetching profile', error: error.message });
     }
 };
 
@@ -459,78 +298,35 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const { username, email, currentPassword, newPassword } = req.body;
-        const users = await readUsers();
-        const userIndex = users.findIndex(u => u.id === req.user.userId);
-
-        if (userIndex === -1) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
-
-        const user = users[userIndex];
-        const updates = {};
-
-        // Update username if provided
         if (username) {
-            const usernameExists = users.some(u => u.username === username && u.id !== user.id);
+            const usernameExists = await User.findOne({ username, _id: { $ne: user._id } });
             if (usernameExists) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Username already taken'
-                });
+                return res.status(400).json({ success: false, message: 'Username already taken' });
             }
-            updates.username = username;
+            user.username = username;
         }
-
-        // Update email if provided
         if (email) {
-            const emailExists = users.some(u => u.email === email && u.id !== user.id);
+            const emailExists = await User.findOne({ email, _id: { $ne: user._id } });
             if (emailExists) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Email already taken'
-                });
+                return res.status(400).json({ success: false, message: 'Email already taken' });
             }
-            updates.email = email;
+            user.email = email;
         }
-
-        // Update password if provided
         if (currentPassword && newPassword) {
             const isMatch = await bcrypt.compare(currentPassword, user.password);
             if (!isMatch) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Current password is incorrect'
-                });
+                return res.status(401).json({ success: false, message: 'Current password is incorrect' });
             }
-            updates.password = await bcrypt.hash(newPassword, 12);
+            user.password = await bcrypt.hash(newPassword, 12);
         }
-
-        // Update user
-        users[userIndex] = {
-            ...user,
-            ...updates
-        };
-
-        await writeUsers(users);
-
-        res.json({
-            success: true,
-            message: 'Profile updated successfully',
-            data: {
-                id: user.id,
-                username: updates.username || user.username,
-                email: updates.email || user.email
-            }
-        });
+        await user.save();
+        res.json({ success: true, message: 'Profile updated successfully', data: { id: user._id, username: user.username, email: user.email } });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error updating profile',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error updating profile', error: error.message });
     }
 };
 
@@ -564,40 +360,17 @@ exports.updateProfile = async (req, res) => {
 exports.deleteProfile = async (req, res) => {
     try {
         const { password } = req.body;
-        const users = await readUsers();
-        const userIndex = users.findIndex(u => u.id === req.user.userId);
-
-        if (userIndex === -1) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
-
-        const user = users[userIndex];
-
-        // Verify password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({
-                success: false,
-                message: 'Password is incorrect'
-            });
+            return res.status(401).json({ success: false, message: 'Password is incorrect' });
         }
-
-        // Remove user
-        users.splice(userIndex, 1);
-        await writeUsers(users);
-
-        res.json({
-            success: true,
-            message: 'Account deleted successfully'
-        });
+        await User.findByIdAndDelete(user._id);
+        res.json({ success: true, message: 'Account deleted successfully' });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting account',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error deleting account', error: error.message });
     }
 }; 

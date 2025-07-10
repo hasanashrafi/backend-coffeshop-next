@@ -13,13 +13,14 @@ const PORT = process.env.PORT || 3004;
 
 // Robust CORS setup for multiple origins
 const allowedOrigins = [
-  'http://localhost:3000', // Local frontend
-  'https://your-frontend-domain.com' // Add your deployed frontend domain here
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  // Add any other origins you use for development or production
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc.)
+    // Allow requests with no origin (like Postman, curl, etc.)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
