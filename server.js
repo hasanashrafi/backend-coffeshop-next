@@ -13,10 +13,10 @@ const PORT = process.env.PORT || 3004;
 
 // Robust CORS setup for multiple origins
 const allowedOrigins = [
-  'http://localhost:3000',
+  'http://localhost:3000', // Local React/Next frontend
   'http://127.0.0.1:3000',
-  'https://backend-coffeshop-node.onrender.com/api-docs'
-  // Add any other origins you use for development or production
+  'https://backend-coffeshop-node.onrender.com', // Your Render backend (for Swagger UI, etc.)
+  'https://your-frontend-domain.com', // <-- Add your deployed frontend domain here!
 ];
 
 const corsOptions = {
@@ -51,8 +51,8 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${PORT}`,
-        description: 'Development server',
+        url: process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`,
+        description: process.env.RENDER_EXTERNAL_URL ? 'Production server' : 'Development server',
       },
     ],
     components: {

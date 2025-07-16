@@ -34,15 +34,6 @@ const writeUsers = async (users) => {
     }
 };
 
-// Handle OPTIONS requests for CORS
-router.options('*', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.status(200).end();
-});
-
 /**
  * @swagger
  * /api/users/signin:
@@ -101,12 +92,6 @@ router.post('/signin', async (req, res) => {
                 message: 'Invalid credentials'
             });
         }
-
-        // Set CORS headers
-        res.header('Access-Control-Allow-Origin', '*');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-        res.header('Access-Control-Allow-Credentials', 'true');
 
         res.json({
             success: true,
@@ -231,12 +216,6 @@ router.post('/signup', async (req, res) => {
         // Save user to database
         users.push(newUser);
         await writeUsers(users);
-
-        // Set CORS headers
-        res.header('Access-Control-Allow-Origin', '*');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-        res.header('Access-Control-Allow-Credentials', 'true');
 
         res.status(201).json({
             success: true,

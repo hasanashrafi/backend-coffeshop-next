@@ -47,7 +47,6 @@ const readProducts = async () => {
 router.get('/', async (req, res) => {
     try {
         const products = await readProducts();
-        res.setHeader('Access-Control-Allow-Origin', '*');
         res.json({
             success: true,
             data: products
@@ -110,7 +109,6 @@ router.get('/:id', async (req, res) => {
             });
         }
 
-        res.setHeader('Access-Control-Allow-Origin', '*');
         res.json({
             success: true,
             data: product
@@ -123,15 +121,6 @@ router.get('/:id', async (req, res) => {
             error: error.message
         });
     }
-});
-
-// Handle OPTIONS requests for CORS
-router.options('*', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.status(200).end();
 });
 
 module.exports = router; 

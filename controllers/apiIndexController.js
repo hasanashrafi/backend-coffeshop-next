@@ -3,7 +3,6 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const usersRouter = require('./users');
 const productRoutes = require('./products');
-const cors = require('cors');
 
 const app = express();
 
@@ -18,7 +17,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.VERCEL_URL  ,
+        url: process.env.VERCEL_URL,
         description: 'API server',
       },
     ],
@@ -53,31 +52,6 @@ app.use((err, req, res, next) => {
     error: err.message
   });
 });
-
-// CORS configuration
-const allowedOrigins = [
-  'http://localhost:3000', // Local frontend
-  'http://localhost:3004/' // Add your deployed frontend domain here
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  optionsSuccessStatus: 204
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
 // Start server
 const PORT = process.env.PORT || 10000;
