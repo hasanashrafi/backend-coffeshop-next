@@ -15,6 +15,7 @@ const PORT = process.env.PORT || 3004;
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'https://backend-coffeshop-node.onrender.com/api-docs'
   // Add any other origins you use for development or production
 ];
 
