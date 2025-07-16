@@ -1,6 +1,7 @@
 module.exports = (req, res, next) => {
-    const token = req.headers['authorization'];
-    if (token === 'Bearer admin-secret-token') {
+    const adminPassword = process.env.ADMIN_PASSWORD || 'hasoo';
+    const providedPassword = req.headers['x-admin-password'];
+    if (providedPassword && providedPassword === adminPassword) {
         return next();
     }
     return res.status(401).json({ success: false, message: 'Unauthorized: Admin only' });
