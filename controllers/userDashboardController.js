@@ -21,9 +21,92 @@ const Product = require('../models/Product');
  *         favoriteProducts:
  *           type: array
  *           description: User's favorite products
+ *     UserProfile:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         username:
+ *           type: string
+ *         email:
+ *           type: string
+ *         firstName:
+ *           type: string
+ *         lastName:
+ *           type: string
+ *         fullName:
+ *           type: string
+ *         displayName:
+ *           type: string
+ *         avatar:
+ *           type: string
+ *         phone:
+ *           type: string
+ *         loyaltyPoints:
+ *           type: number
+ *         totalSpent:
+ *           type: number
+ *         totalOrders:
+ *           type: number
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         address:
+ *           type: object
+ *           properties:
+ *             street:
+ *               type: string
+ *             city:
+ *               type: string
+ *             postalCode:
+ *               type: string
+ *             country:
+ *               type: string
+ *     UserStatistics:
+ *       type: object
+ *       properties:
+ *         loyaltyPoints:
+ *           type: number
+ *         favoriteProductsCount:
+ *           type: number
+ *         totalOrders:
+ *           type: number
+ *         totalSpent:
+ *           type: number
+ *         averageOrderValue:
+ *           type: number
  */
 
-// Get user dashboard data
+/**
+ * @swagger
+ * /api/dashboard/{userId}/dashboard:
+ *   get:
+ *     summary: Get user dashboard data
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Dashboard data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/UserDashboard'
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 exports.getUserDashboard = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -144,7 +227,36 @@ exports.getUserDashboard = async (req, res) => {
     }
 };
 
-// Get user profile
+/**
+ * @swagger
+ * /api/dashboard/{userId}/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/UserProfile'
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 exports.getUserProfile = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -186,7 +298,64 @@ exports.getUserProfile = async (req, res) => {
     }
 };
 
-// Update user profile
+/**
+ * @swagger
+ * /api/dashboard/{userId}/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               avatar:
+ *                 type: string
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   postalCode:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/UserProfile'
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 exports.updateUserProfile = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -241,7 +410,36 @@ exports.updateUserProfile = async (req, res) => {
     }
 };
 
-// Get user statistics
+/**
+ * @swagger
+ * /api/dashboard/{userId}/statistics:
+ *   get:
+ *     summary: Get user statistics
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/UserStatistics'
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 exports.getUserStatistics = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -286,7 +484,84 @@ exports.getUserStatistics = async (req, res) => {
     }
 };
 
-// Get user favorite products
+/**
+ * @swagger
+ * /api/dashboard/{userId}/favorites:
+ *   get:
+ *     summary: Get user favorite products
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of products per page
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *     responses:
+ *       200:
+ *         description: Favorite products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       image:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       discount:
+ *                         type: number
+ *                       discountedPrice:
+ *                         type: number
+ *                       hasDiscount:
+ *                         type: boolean
+ *                       averageRating:
+ *                         type: number
+ *                       ratingCount:
+ *                         type: number
+ *                       salesCount:
+ *                         type: number
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     currentPage:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     totalProducts:
+ *                       type: integer
+ *                     hasNext:
+ *                       type: boolean
+ *                     hasPrev:
+ *                       type: boolean
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 exports.getUserFavoriteProducts = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -340,7 +615,47 @@ exports.getUserFavoriteProducts = async (req, res) => {
     }
 };
 
-// Add product to favorites
+/**
+ * @swagger
+ * /api/dashboard/{userId}/favorites/{productId}:
+ *   post:
+ *     summary: Add product to favorites
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID
+ *     responses:
+ *       200:
+ *         description: Product added to favorites successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     favoriteProductsCount:
+ *                       type: number
+ *       404:
+ *         description: User or product not found
+ *       500:
+ *         description: Server error
+ */
 exports.addToFavorites = async (req, res) => {
     try {
         const { userId, productId } = req.params;
@@ -378,7 +693,47 @@ exports.addToFavorites = async (req, res) => {
     }
 };
 
-// Remove product from favorites
+/**
+ * @swagger
+ * /api/dashboard/{userId}/favorites/{productId}:
+ *   delete:
+ *     summary: Remove product from favorites
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID
+ *     responses:
+ *       200:
+ *         description: Product removed from favorites successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     favoriteProductsCount:
+ *                       type: number
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 exports.removeFromFavorites = async (req, res) => {
     try {
         const { userId, productId } = req.params;
@@ -408,7 +763,45 @@ exports.removeFromFavorites = async (req, res) => {
     }
 };
 
-// Check if product is favorite
+/**
+ * @swagger
+ * /api/dashboard/{userId}/favorites/{productId}/check:
+ *   get:
+ *     summary: Check if product is in favorites
+ *     tags: [User Dashboard]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID
+ *     responses:
+ *       200:
+ *         description: Favorite status checked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     isFavorite:
+ *                       type: boolean
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
 exports.checkFavoriteStatus = async (req, res) => {
     try {
         const { userId, productId } = req.params;

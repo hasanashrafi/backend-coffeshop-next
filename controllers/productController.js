@@ -251,7 +251,61 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
-// New rating functionality
+/**
+ * @swagger
+ * /api/products/{id}/rate:
+ *   post:
+ *     summary: Rate a product
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - rating
+ *             properties:
+ *               rating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 description: Rating from 1 to 5 stars
+ *               comment:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Optional comment with rating
+ *               userId:
+ *                 type: string
+ *                 description: User ID (if not provided in auth)
+ *     responses:
+ *       200:
+ *         description: Rating added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *       400:
+ *         description: Invalid rating or missing user ID
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ */
 exports.rateProduct = async (req, res) => {
   try {
     const { rating, comment } = req.body;
@@ -299,6 +353,64 @@ exports.rateProduct = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/products/{id}/ratings:
+ *   get:
+ *     summary: Get product ratings
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID
+ *     responses:
+ *       200:
+ *         description: Product ratings retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     averageRating:
+ *                       type: number
+ *                     ratingCount:
+ *                       type: number
+ *                     ratings:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           userId:
+ *                             type: object
+ *                             properties:
+ *                               _id:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               email:
+ *                                 type: string
+ *                           rating:
+ *                             type: number
+ *                           comment:
+ *                             type: string
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ */
 exports.getProductRatings = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('ratings.userId', 'name email');
@@ -326,6 +438,49 @@ exports.getProductRatings = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/products/{id}/increment-sales:
+ *   post:
+ *     summary: Increment product sales count
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ID
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: number
+ *                 default: 1
+ *                 description: Quantity to increment sales count
+ *     responses:
+ *       200:
+ *         description: Sales count updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ */
 exports.incrementSales = async (req, res) => {
   try {
     const { quantity = 1 } = req.body;
@@ -357,7 +512,31 @@ exports.incrementSales = async (req, res) => {
   }
 };
 
-// Get products with discounts
+/**
+ * @swagger
+ * /api/products/discounted/all:
+ *   get:
+ *     summary: Get all discounted products
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: Discounted products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *                 count:
+ *                   type: number
+ *       500:
+ *         description: Server error
+ */
 exports.getDiscountedProducts = async (req, res) => {
   try {
     const products = await Product.find({ 
@@ -385,7 +564,38 @@ exports.getDiscountedProducts = async (req, res) => {
   }
 };
 
-// Get top rated products
+/**
+ * @swagger
+ * /api/products/top-rated/all:
+ *   get:
+ *     summary: Get top rated products
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of products to retrieve
+ *     responses:
+ *       200:
+ *         description: Top rated products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *                 count:
+ *                   type: number
+ *       500:
+ *         description: Server error
+ */
 exports.getTopRatedProducts = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
@@ -416,7 +626,38 @@ exports.getTopRatedProducts = async (req, res) => {
   }
 };
 
-// Get best selling products
+/**
+ * @swagger
+ * /api/products/best-selling/all:
+ *   get:
+ *     summary: Get best selling products
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of products to retrieve
+ *     responses:
+ *       200:
+ *         description: Best selling products retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *                 count:
+ *                   type: number
+ *       500:
+ *         description: Server error
+ */
 exports.getBestSellingProducts = async (req, res) => {
   try {
     const { limit = 10 } = req.query;

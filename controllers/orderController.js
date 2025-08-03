@@ -33,9 +33,84 @@ const Product = require('../models/Product');
  *           type: string
  *           enum: [pending, paid, failed]
  *           description: Payment status
+ *     OrderItem:
+ *       type: object
+ *       required:
+ *         - productId
+ *         - quantity
+ *       properties:
+ *         productId:
+ *           type: string
+ *           description: Product ID
+ *         quantity:
+ *           type: number
+ *           description: Quantity of the product
+ *     OrderStatus:
+ *       type: string
+ *       enum: [pending, processing, completed, delivered, cancelled]
+ *       description: Order status values
  */
 
-// Create new order
+/**
+ * @swagger
+ * /api/orders:
+ *   post:
+ *     summary: Create a new order
+ *     tags: [Orders]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - items
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/OrderItem'
+ *               deliveryAddress:
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   postalCode:
+ *                     type: string
+ *                   phone:
+ *                     type: string
+ *               paymentMethod:
+ *                 type: string
+ *                 default: cash
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Order created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ */
 exports.createOrder = async (req, res) => {
     try {
         const { userId, items, deliveryAddress, paymentMethod, notes } = req.body;
@@ -111,7 +186,66 @@ exports.createOrder = async (req, res) => {
     }
 };
 
-// Get user orders
+/**
+ * @swagger
+ * /api/orders/user/{userId}:
+ *   get:
+ *     summary: Get user orders
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           $ref: '#/components/schemas/OrderStatus'
+ *         description: Filter by order status
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of orders per page
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *     responses:
+ *       200:
+ *         description: User orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Order'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     currentPage:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     totalOrders:
+ *                       type: integer
+ *                     hasNext:
+ *                       type: boolean
+ *                     hasPrev:
+ *                       type: boolean
+ *       500:
+ *         description: Server error
+ */
 exports.getUserOrders = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -150,7 +284,36 @@ exports.getUserOrders = async (req, res) => {
     }
 };
 
-// Get order by ID
+/**
+ * @swagger
+ * /api/orders/{orderId}:
+ *   get:
+ *     summary: Get order by ID
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Order ID
+ *     responses:
+ *       200:
+ *         description: Order retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       404:
+ *         description: Order not found
+ *       500:
+ *         description: Server error
+ */
 exports.getOrderById = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -177,7 +340,52 @@ exports.getOrderById = async (req, res) => {
     }
 };
 
-// Update order status
+/**
+ * @swagger
+ * /api/orders/{orderId}/status:
+ *   put:
+ *     summary: Update order status
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Order ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 $ref: '#/components/schemas/OrderStatus'
+ *               note:
+ *                 type: string
+ *                 description: Optional note for status change
+ *     responses:
+ *       200:
+ *         description: Order status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       404:
+ *         description: Order not found
+ *       500:
+ *         description: Server error
+ */
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -206,7 +414,70 @@ exports.updateOrderStatus = async (req, res) => {
     }
 };
 
-// Get order status summary
+/**
+ * @swagger
+ * /api/orders/user/{userId}/summary:
+ *   get:
+ *     summary: Get order status summary
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Order status summary retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pending:
+ *                       type: object
+ *                       properties:
+ *                         count:
+ *                           type: integer
+ *                         totalAmount:
+ *                           type: number
+ *                     processing:
+ *                       type: object
+ *                       properties:
+ *                         count:
+ *                           type: integer
+ *                         totalAmount:
+ *                           type: number
+ *                     completed:
+ *                       type: object
+ *                       properties:
+ *                         count:
+ *                           type: integer
+ *                         totalAmount:
+ *                           type: number
+ *                     delivered:
+ *                       type: object
+ *                       properties:
+ *                         count:
+ *                           type: integer
+ *                         totalAmount:
+ *                           type: number
+ *                     cancelled:
+ *                       type: object
+ *                       properties:
+ *                         count:
+ *                           type: integer
+ *                         totalAmount:
+ *                           type: number
+ *       500:
+ *         description: Server error
+ */
 exports.getOrderStatusSummary = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -249,7 +520,59 @@ exports.getOrderStatusSummary = async (req, res) => {
     }
 };
 
-// Get recent orders
+/**
+ * @swagger
+ * /api/orders/user/{userId}/recent:
+ *   get:
+ *     summary: Get recent orders
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *         description: Number of recent orders to retrieve
+ *     responses:
+ *       200:
+ *         description: Recent orders retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       orderNumber:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       items:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             productName:
+ *                               type: string
+ *                             quantity:
+ *                               type: number
+ *       500:
+ *         description: Server error
+ */
 exports.getRecentOrders = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -283,7 +606,50 @@ exports.getRecentOrders = async (req, res) => {
     }
 };
 
-// Cancel order
+/**
+ * @swagger
+ * /api/orders/{orderId}:
+ *   delete:
+ *     summary: Cancel order
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Order ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: Reason for cancellation
+ *     responses:
+ *       200:
+ *         description: Order cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Order'
+ *       400:
+ *         description: Order cannot be cancelled
+ *       404:
+ *         description: Order not found
+ *       500:
+ *         description: Server error
+ */
 exports.cancelOrder = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -319,7 +685,43 @@ exports.cancelOrder = async (req, res) => {
     }
 };
 
-// Get order statistics
+/**
+ * @swagger
+ * /api/orders/user/{userId}/statistics:
+ *   get:
+ *     summary: Get order statistics
+ *     tags: [Orders]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Order statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalOrders:
+ *                       type: integer
+ *                     totalSpent:
+ *                       type: number
+ *                     averageOrderValue:
+ *                       type: number
+ *                     loyaltyPoints:
+ *                       type: integer
+ *       500:
+ *         description: Server error
+ */
 exports.getOrderStatistics = async (req, res) => {
     try {
         const { userId } = req.params;
