@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const userDashboardController = require('../controllers/userDashboardController');
 
-// User dashboard
-router.get('/:userId/dashboard', userDashboardController.getUserDashboard);
-router.get('/:userId/profile', userDashboardController.getUserProfile);
-router.put('/:userId/profile', userDashboardController.updateUserProfile);
-router.get('/:userId/statistics', userDashboardController.getUserStatistics);
+// Main user dashboard - gets all user data in one call
+router.get('/:userId', userDashboardController.getUserDashboard);
 
-// Favorite products
+// Profile management
+router.put('/:userId/profile', userDashboardController.updateUserProfile);
+
+// Favorite products management
 router.get('/:userId/favorites', userDashboardController.getUserFavoriteProducts);
 router.post('/:userId/favorites/:productId', userDashboardController.addToFavorites);
 router.delete('/:userId/favorites/:productId', userDashboardController.removeFromFavorites);

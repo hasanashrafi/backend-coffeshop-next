@@ -14,10 +14,13 @@ const Product = require('../models/Product');
  *           description: User profile information
  *         statistics:
  *           type: object
- *           description: User statistics
+ *           description: User statistics (loyalty points, favorites, total spent, orders)
  *         recentOrders:
  *           type: array
- *           description: Recent orders
+ *           description: Recent orders with status
+ *         orderStatusSummary:
+ *           type: object
+ *           description: Order status breakdown with amounts
  *         favoriteProducts:
  *           type: array
  *           description: User's favorite products
@@ -79,9 +82,9 @@ const Product = require('../models/Product');
 
 /**
  * @swagger
- * /api/dashboard/{userId}/dashboard:
+ * /api/dashboard/{userId}:
  *   get:
- *     summary: Get user dashboard data
+ *     summary: Get complete user dashboard data (profile, statistics, orders, favorites)
  *     tags: [User Dashboard]
  *     parameters:
  *       - in: path
@@ -92,7 +95,7 @@ const Product = require('../models/Product');
  *         description: User ID
  *     responses:
  *       200:
- *         description: Dashboard data retrieved successfully
+ *         description: Complete dashboard data retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -101,7 +104,92 @@ const Product = require('../models/Product');
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: '#/components/schemas/UserDashboard'
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/UserProfile'
+ *                     statistics:
+ *                       $ref: '#/components/schemas/UserStatistics'
+ *                     recentOrders:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           orderNumber:
+ *                             type: string
+ *                           status:
+ *                             type: string
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           items:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 productName:
+ *                                   type: string
+ *                                 quantity:
+ *                                   type: number
+ *                     orderStatusSummary:
+ *                       type: object
+ *                       properties:
+ *                         pending:
+ *                           type: object
+ *                           properties:
+ *                             count:
+ *                               type: number
+ *                             totalAmount:
+ *                               type: number
+ *                         processing:
+ *                           type: object
+ *                           properties:
+ *                             count:
+ *                               type: number
+ *                             totalAmount:
+ *                               type: number
+ *                         completed:
+ *                           type: object
+ *                           properties:
+ *                             count:
+ *                               type: number
+ *                             totalAmount:
+ *                               type: number
+ *                         delivered:
+ *                           type: object
+ *                           properties:
+ *                             count:
+ *                               type: number
+ *                             totalAmount:
+ *                               type: number
+ *                         cancelled:
+ *                           type: object
+ *                           properties:
+ *                             count:
+ *                               type: number
+ *                             totalAmount:
+ *                               type: number
+ *                     favoriteProducts:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           image:
+ *                             type: string
+ *                           price:
+ *                             type: number
+ *                           discount:
+ *                             type: number
+ *                           discountedPrice:
+ *                             type: number
+ *                           hasDiscount:
+ *                             type: boolean
+ *                           averageRating:
+ *                             type: number
  *       404:
  *         description: User not found
  *       500:
@@ -113,7 +201,7 @@ exports.getUserDashboard = async (req, res) => {
 
         // Get user with populated favorite products
         const user = await User.findById(userId)
-            .populate('favoriteProducts', 'name image price discount averageRating');
+            .populate('favoriteProducts', 'name image price discount averageRating ratingCount salesCount');
 
         if (!user) {
             return res.status(404).json({
@@ -122,7 +210,7 @@ exports.getUserDashboard = async (req, res) => {
             });
         }
 
-        // Get user statistics
+        // Get user statistics from orders
         const stats = await Order.aggregate([
             { $match: { userId: require('mongoose').Types.ObjectId(userId) } },
             {
@@ -135,14 +223,14 @@ exports.getUserDashboard = async (req, res) => {
             }
         ]);
 
-        // Get recent orders
+        // Get recent orders (last 3 orders)
         const recentOrders = await Order.find({ userId })
             .populate('items.productId', 'name image')
             .sort({ createdAt: -1 })
             .limit(3)
             .select('orderNumber status createdAt items');
 
-        // Get order status summary
+        // Get order status summary with amounts
         const statusSummary = await Order.aggregate([
             { $match: { userId: require('mongoose').Types.ObjectId(userId) } },
             {
@@ -169,6 +257,31 @@ exports.getUserDashboard = async (req, res) => {
             };
         });
 
+        // Format recent orders for display
+        const formattedRecentOrders = recentOrders.map(order => ({
+            orderNumber: order.orderNumber,
+            status: order.status,
+            createdAt: order.createdAt,
+            items: order.items.map(item => ({
+                productName: item.productName,
+                quantity: item.quantity
+            }))
+        }));
+
+        // Format favorite products with virtual fields
+        const favoriteProducts = user.favoriteProducts.map(product => ({
+            _id: product._id,
+            name: product.name,
+            image: product.image,
+            price: product.price,
+            discount: product.discount,
+            discountedPrice: product.discountedPrice,
+            hasDiscount: product.hasDiscount,
+            averageRating: product.averageRating,
+            ratingCount: product.ratingCount,
+            salesCount: product.salesCount
+        }));
+
         const dashboardData = {
             user: {
                 _id: user._id,
@@ -189,106 +302,18 @@ exports.getUserDashboard = async (req, res) => {
             statistics: {
                 loyaltyPoints: user.loyaltyPoints,
                 favoriteProductsCount: user.favoriteProducts.length,
-                totalSpent: stats[0]?.totalSpent || 0,
                 totalOrders: stats[0]?.totalOrders || 0,
+                totalSpent: stats[0]?.totalSpent || 0,
                 averageOrderValue: stats[0]?.averageOrderValue || 0
             },
-            recentOrders: recentOrders.map(order => ({
-                orderNumber: order.orderNumber,
-                status: order.status,
-                createdAt: order.createdAt,
-                items: order.items.map(item => ({
-                    productName: item.productName,
-                    quantity: item.quantity
-                }))
-            })),
+            recentOrders: formattedRecentOrders,
             orderStatusSummary,
-            favoriteProducts: user.favoriteProducts.map(product => ({
-                _id: product._id,
-                name: product.name,
-                image: product.image,
-                price: product.price,
-                discount: product.discount,
-                discountedPrice: product.discountedPrice,
-                hasDiscount: product.hasDiscount,
-                averageRating: product.averageRating
-            }))
+            favoriteProducts
         };
 
         res.json({
             success: true,
             data: dashboardData
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
-/**
- * @swagger
- * /api/dashboard/{userId}/profile:
- *   get:
- *     summary: Get user profile
- *     tags: [User Dashboard]
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *         description: User ID
- *     responses:
- *       200:
- *         description: User profile retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/UserProfile'
- *       404:
- *         description: User not found
- *       500:
- *         description: Server error
- */
-exports.getUserProfile = async (req, res) => {
-    try {
-        const { userId } = req.params;
-
-        const user = await User.findById(userId).select('-password');
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            data: {
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                fullName: user.fullName,
-                displayName: user.displayName,
-                avatar: user.avatar,
-                phone: user.phone,
-                loyaltyPoints: user.loyaltyPoints,
-                totalSpent: user.totalSpent,
-                totalOrders: user.totalOrders,
-                createdAt: user.createdAt,
-                address: user.address,
-                preferences: user.preferences
-            }
         });
     } catch (error) {
         res.status(500).json({
@@ -401,80 +426,6 @@ exports.updateUserProfile = async (req, res) => {
                 address: user.address,
                 preferences: user.preferences
             }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
-/**
- * @swagger
- * /api/dashboard/{userId}/statistics:
- *   get:
- *     summary: Get user statistics
- *     tags: [User Dashboard]
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *         description: User ID
- *     responses:
- *       200:
- *         description: User statistics retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/UserStatistics'
- *       404:
- *         description: User not found
- *       500:
- *         description: Server error
- */
-exports.getUserStatistics = async (req, res) => {
-    try {
-        const { userId } = req.params;
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        const stats = await Order.aggregate([
-            { $match: { userId: require('mongoose').Types.ObjectId(userId) } },
-            {
-                $group: {
-                    _id: null,
-                    totalOrders: { $sum: 1 },
-                    totalSpent: { $sum: '$totalAmount' },
-                    averageOrderValue: { $avg: '$totalAmount' }
-                }
-            }
-        ]);
-
-        const statistics = {
-            loyaltyPoints: user.loyaltyPoints,
-            favoriteProductsCount: user.favoriteProducts.length,
-            totalOrders: stats[0]?.totalOrders || 0,
-            totalSpent: stats[0]?.totalSpent || 0,
-            averageOrderValue: stats[0]?.averageOrderValue || 0
-        };
-
-        res.json({
-            success: true,
-            data: statistics
         });
     } catch (error) {
         res.status(500).json({
