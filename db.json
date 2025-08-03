@@ -8,7 +8,14 @@
       "description": "This is product 1.",
       "image": "/images/products/p1.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.385Z"
     },
     {
       "id": 2,
@@ -17,9 +24,16 @@
       "discount": 12.5,
       "description": "قهوه سبز با کیفیت عالی و طعم منحصر به فرد",
       "image": "/images/products/p2.png",
-      "category": "tea"
-  ,
-  "rate":0  },
+      "category": "tea",
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
+    },
     {
       "id": 3,
       "name": "قهوه طبیعی بن مانو مدل اسپشیال 1 لیتری",
@@ -27,9 +41,16 @@
       "discount": 10,
       "description": "قهوه طبیعی با طعم تازه و دلپذیر",
       "image": "/images/products/p3.png",
-      "category": "juice"
-,
-"rate":0    },
+      "category": "juice",
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
+    },
     {
       "id": 4,
       "name": "قهوه ترک بن مانو مدل کلاسیک 250 گرمی",
@@ -38,7 +59,14 @@
       "description": "قهوه ترک با کیفیت برتر و طعم اصیل",
       "image": "/images/products/p4.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 5,
@@ -47,9 +75,16 @@
       "discount": 11.5,
       "description": "قهوه سیاه با عطر و طعم قوی و دلپذیر",
       "image": "/images/products/p5.png",
-      "category": "tea"
-  ,
-  "rate":0  },
+      "category": "tea",
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
+    },
     {
       "id": 6,
       "name": "قهوه مخلوط بن مانو مدل پلاس 1 لیتری",
@@ -57,9 +92,16 @@
       "discount": 12,
       "description": "قهوه مخلوط با طعم منحصر به فرد",
       "image": "/images/products/p6.png",
-      "category": "juice"
-,
-"rate":0    },
+      "category": "juice",
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
+    },
     {
       "id": 7,
       "name": "قهوه فرانسه بن مانو مدل پریمیوم 250 گرمی",
@@ -68,7 +110,14 @@
       "description": "قهوه فرانسه با کیفیت ممتاز و طعم منحصر به فرد",
       "image": "/images/products/p7.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 8,
@@ -77,9 +126,16 @@
       "discount": 13.5,
       "description": "قهوه اولانگ با عطر و طعم قوی و دلپذیر",
       "image": "/images/products/p8.png",
-      "category": "tea"
-  ,
-  "rate":0  },
+      "category": "tea",
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
+    },
     {
       "id": 9,
       "name": "قهوه عربیکا ویژه 500 گرمی",
@@ -88,7 +144,14 @@
       "description": "قهوه عربیکا با عطر و طعم ملایم و دلنشین.",
       "image": "/images/products/p9.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 10,
@@ -98,7 +161,14 @@
       "description": "قهوه روبوستا با طعم قوی و کافئین بالا.",
       "image": "/images/products/p10.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 11,
@@ -108,7 +178,14 @@
       "description": "قهوه اسپرسو کلاسیک مناسب برای دستگاه اسپرسوساز.",
       "image": "/images/products/p11.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 12,
@@ -118,7 +195,14 @@
       "description": "قهوه ترک با آسیاب ریز و طعم اصیل.",
       "image": "/images/products/p12.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 13,
@@ -128,7 +212,14 @@
       "description": "قهوه فوری با حل شوندگی سریع و طعم عالی.",
       "image": "/images/products/p13.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 14,
@@ -138,7 +229,14 @@
       "description": "قهوه اسپشیالیتی با دانه‌های اتیوپی و عطر گل‌ها.",
       "image": "/images/products/p14.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 15,
@@ -148,7 +246,14 @@
       "description": "قهوه کلمبیا با طعم میوه‌ای و اسیدیته ملایم.",
       "image": "/images/products/p15.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 16,
@@ -158,7 +263,14 @@
       "description": "قهوه موکا با طعم شکلاتی و عطر قوی.",
       "image": "/images/products/p16.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 17,
@@ -168,7 +280,14 @@
       "description": "قهوه دارک روست با تلخی ملایم و عطر دودی.",
       "image": "/images/products/p17.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 18,
@@ -178,7 +297,14 @@
       "description": "قهوه لایت روست با اسیدیته بالا و طعم میوه‌ای.",
       "image": "/images/products/p18.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 19,
@@ -188,7 +314,14 @@
       "description": "قهوه اسپرسو با دانه‌های عربیکا و طعم متعادل.",
       "image": "/images/products/p19.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 20,
@@ -198,7 +331,14 @@
       "description": "قهوه اسپرسو با دانه‌های روبوستا و کافئین بالا.",
       "image": "/images/products/p20.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 21,
@@ -208,7 +348,14 @@
       "description": "قهوه اسپرسو ترکیبی با طعم متعادل و عطر قوی.",
       "image": "/images/products/p21.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 22,
@@ -218,7 +365,14 @@
       "description": "قهوه اسپرسو ویژه با دانه‌های انتخابی و طعم خاص.",
       "image": "/images/products/p22.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 23,
@@ -228,7 +382,14 @@
       "description": "قهوه اسپرسو دارک با تلخی بیشتر و عطر قوی.",
       "image": "/images/products/p23.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 24,
@@ -238,7 +399,14 @@
       "description": "قهوه اسپرسو لایت با اسیدیته بالا و طعم میوه‌ای.",
       "image": "/images/products/p24.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 25,
@@ -248,7 +416,14 @@
       "description": "قهوه اسپرسو کلاسیک با طعم اصیل و عطر قوی.",
       "image": "/images/products/p25.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 26,
@@ -258,7 +433,14 @@
       "description": "قهوه اسپرسو پریمیوم با دانه‌های انتخابی و کیفیت بالا.",
       "image": "/images/products/p26.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 27,
@@ -268,7 +450,14 @@
       "description": "قهوه اسپرسو اسپشیال با طعم خاص و عطر بی‌نظیر.",
       "image": "/images/products/p27.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     },
     {
       "id": 28,
@@ -278,7 +467,14 @@
       "description": "قهوه اسپرسو گلد با کیفیت ممتاز و طعم متعادل.",
       "image": "/images/products/p28.png",
       "category": "coffee",
-      "rate":0
+      "rate": 0,
+      "salesCount": 0,
+      "totalRating": 0,
+      "ratingCount": 0,
+      "averageRating": 0,
+      "ratings": [],
+      "isActive": true,
+      "updatedAt": "2025-08-03T18:27:24.386Z"
     }
   ],
   "aboutUs": "این فروشگاه قهوه با هدف ارائه بهترین قهوه‌های دنیا به شما عزیزان راه‌اندازی شده است.",
