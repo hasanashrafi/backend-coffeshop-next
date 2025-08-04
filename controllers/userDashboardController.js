@@ -199,6 +199,23 @@ exports.getUserDashboard = async (req, res) => {
     try {
         const { userId } = req.params;
 
+        // Validate userId
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is required'
+            });
+        }
+
+        // Check if userId is a valid ObjectId format
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid user ID format'
+            });
+        }
+
         // Get user with populated favorite products
         const user = await User.findById(userId)
             .populate('favoriteProducts', 'name image price discount averageRating ratingCount salesCount');
@@ -211,36 +228,54 @@ exports.getUserDashboard = async (req, res) => {
         }
 
         // Get user statistics from orders
-        const stats = await Order.aggregate([
-            { $match: { userId: require('mongoose').Types.ObjectId(userId) } },
-            {
-                $group: {
-                    _id: null,
-                    totalOrders: { $sum: 1 },
-                    totalSpent: { $sum: '$totalAmount' },
-                    averageOrderValue: { $avg: '$totalAmount' }
+        let stats = [];
+        try {
+            stats = await Order.aggregate([
+                { $match: { userId: userId } },
+                {
+                    $group: {
+                        _id: null,
+                        totalOrders: { $sum: 1 },
+                        totalSpent: { $sum: '$totalAmount' },
+                        averageOrderValue: { $avg: '$totalAmount' }
+                    }
                 }
-            }
-        ]);
+            ]);
+        } catch (error) {
+            console.error('Error in order statistics aggregation:', error);
+            stats = [{ totalOrders: 0, totalSpent: 0, averageOrderValue: 0 }];
+        }
 
         // Get recent orders (last 3 orders)
-        const recentOrders = await Order.find({ userId })
-            .populate('items.productId', 'name image')
-            .sort({ createdAt: -1 })
-            .limit(3)
-            .select('orderNumber status createdAt items');
+        let recentOrders = [];
+        try {
+            recentOrders = await Order.find({ userId })
+                .populate('items.productId', 'name image')
+                .sort({ createdAt: -1 })
+                .limit(3)
+                .select('orderNumber status createdAt items');
+        } catch (error) {
+            console.error('Error fetching recent orders:', error);
+            recentOrders = [];
+        }
 
         // Get order status summary with amounts
-        const statusSummary = await Order.aggregate([
-            { $match: { userId: require('mongoose').Types.ObjectId(userId) } },
-            {
-                $group: {
-                    _id: '$status',
-                    count: { $sum: 1 },
-                    totalAmount: { $sum: '$totalAmount' }
+        let statusSummary = [];
+        try {
+            statusSummary = await Order.aggregate([
+                { $match: { userId: userId } },
+                {
+                    $group: {
+                        _id: '$status',
+                        count: { $sum: 1 },
+                        totalAmount: { $sum: '$totalAmount' }
+                    }
                 }
-            }
-        ]);
+            ]);
+        } catch (error) {
+            console.error('Error in order status summary aggregation:', error);
+            statusSummary = [];
+        }
 
         const orderStatusSummary = {
             pending: { count: 0, totalAmount: 0 },
