@@ -56,197 +56,441 @@ const path = require('path');
 
 // Helper function to read and write to db.json (for backward compatibility)
 const readDb = async () => {
-  const data = await fs.readFile(path.join(__dirname, '../db.json'), 'utf8');
-  return JSON.parse(data);
+  try {
+    const data = await fs.readFile(path.join(__dirname, '../db.json'), 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error reading db.json:', error);
+    return { products: [] };
+  }
 };
 
 const writeDb = async (data) => {
-  await fs.writeFile(path.join(__dirname, '../db.json'), JSON.stringify(data, null, 2));
+  try {
+    await fs.writeFile(path.join(__dirname, '../db.json'), JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('Error writing db.json:', error);
+  }
+};
+
+// Helper function to check if MongoDB is connected
+const isMongoConnected = () => {
+  const mongoose = require('mongoose');
+  return mongoose.connection.readyState === 1;
+};
+
+// Helper function to convert JSON product to MongoDB format
+const convertJsonToMongoFormat = (jsonProduct) => {
+  return {
+    _id: jsonProduct.id || jsonProduct._id,
+    name: jsonProduct.name,
+    price: parseFloat(jsonProduct.price) || jsonProduct.price,
+    discount: jsonProduct.discount || 0,
+    description: jsonProduct.description,
+    image: jsonProduct.image,
+    category: jsonProduct.category,
+    salesCount: jsonProduct.salesCount || 0,
+    totalRating: jsonProduct.totalRating || 0,
+    ratingCount: jsonProduct.ratingCount || 0,
+    averageRating: jsonProduct.averageRating || 0,
+    ratings: jsonProduct.ratings || [],
+    isActive: jsonProduct.isActive !== undefined ? jsonProduct.isActive : true,
+    createdAt: jsonProduct.createdAt || new Date(),
+    updatedAt: jsonProduct.updatedAt || new Date()
+  };
 };
 
 // Controller functions
 exports.getAllProducts = async (req, res) => {
   try {
     const { category, hasDiscount, minRating, sortBy, sortOrder = 'asc' } = req.query;
-    
-    let query = { isActive: true };
-    
-    // Filter by category
-    if (category) {
-      query.category = category;
-    }
-    
-    // Filter by discount
-    if (hasDiscount === 'true') {
-      query.discount = { $gt: 0 };
-    } else if (hasDiscount === 'false') {
-      query.discount = 0;
-    }
-    
-    // Filter by minimum rating
-    if (minRating) {
-      query.averageRating = { $gte: parseFloat(minRating) };
-    }
-    
-    // Build sort object
-    let sort = {};
-    if (sortBy) {
-      sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      let query = { isActive: true };
+
+      // Filter by category
+      if (category) {
+        query.category = category;
+      }
+
+      // Filter by discount
+      if (hasDiscount === 'true') {
+        query.discount = { $gt: 0 };
+      } else if (hasDiscount === 'false') {
+        query.discount = 0;
+      }
+
+      // Filter by minimum rating
+      if (minRating) {
+        query.averageRating = { $gte: parseFloat(minRating) };
+      }
+
+      // Build sort object
+      let sort = {};
+      if (sortBy) {
+        sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+      } else {
+        sort.createdAt = -1; // Default sort by newest
+      }
+
+      const products = await Product.find(query).sort(sort);
+
+      // If MongoDB has products, return them
+      if (products && products.length > 0) {
+        // Add virtual fields to response
+        const productsWithVirtuals = products.map(product => {
+          const productObj = product.toObject();
+          productObj.discountedPrice = product.discountedPrice;
+          productObj.hasDiscount = product.hasDiscount;
+          return productObj;
+        });
+
+        return res.json({
+          success: true,
+          data: productsWithVirtuals,
+          count: productsWithVirtuals.length
+        });
+      }
+      
+      // If MongoDB is connected but empty, fall back to JSON
+      console.log('MongoDB connected but empty, using JSON file fallback');
     } else {
-      sort.createdAt = -1; // Default sort by newest
+      console.log('MongoDB not connected, using JSON file fallback');
     }
-    
-    const products = await Product.find(query).sort(sort);
-    
-    // Add virtual fields to response
+
+    // Fallback to JSON file
+    const db = await readDb();
+    let products = db.products || [];
+
+    // Apply filters
+    if (category) {
+      products = products.filter(p => p.category === category);
+    }
+
+    if (hasDiscount === 'true') {
+      products = products.filter(p => p.discount && p.discount > 0);
+    } else if (hasDiscount === 'false') {
+      products = products.filter(p => !p.discount || p.discount === 0);
+    }
+
+    if (minRating) {
+      products = products.filter(p => p.averageRating >= parseFloat(minRating));
+    }
+
+    // Apply sorting
+    if (sortBy) {
+      products.sort((a, b) => {
+        const aVal = a[sortBy] || 0;
+        const bVal = b[sortBy] || 0;
+        return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+      });
+    } else {
+      products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    // Add virtual fields
     const productsWithVirtuals = products.map(product => {
-      const productObj = product.toObject();
-      productObj.discountedPrice = product.discountedPrice;
-      productObj.hasDiscount = product.hasDiscount;
-      return productObj;
+      const productData = convertJsonToMongoFormat(product);
+      return {
+        ...productData,
+        discountedPrice: productData.discount > 0 ?
+          productData.price - (productData.price * productData.discount / 100) :
+          productData.price,
+        hasDiscount: productData.discount > 0
+      };
     });
-    
+
     res.json({
       success: true,
       data: productsWithVirtuals,
       count: productsWithVirtuals.length
     });
   } catch (error) {
-    res.status(500).json({ 
+    console.error('Error in getAllProducts:', error);
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Product not found' 
+    const { id } = req.params;
+
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const product = await Product.findById(id);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+
+      const productObj = product.toObject();
+      productObj.discountedPrice = product.discountedPrice;
+      productObj.hasDiscount = product.hasDiscount;
+
+      return res.json({
+        success: true,
+        data: productObj
       });
     }
-    
-    const productObj = product.toObject();
-    productObj.discountedPrice = product.discountedPrice;
-    productObj.hasDiscount = product.hasDiscount;
-    
+
+    // Fallback to JSON file
+    const db = await readDb();
+    const product = db.products.find(p => p.id === parseInt(id) || p._id === id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    const productData = convertJsonToMongoFormat(product);
+    productData.discountedPrice = productData.discount > 0 ?
+      productData.price - (productData.price * productData.discount / 100) :
+      productData.price;
+    productData.hasDiscount = productData.discount > 0;
+
     res.json({
       success: true,
-      data: productObj
+      data: productData
     });
   } catch (error) {
-    res.status(500).json({ 
+    console.error('Error in getProductById:', error);
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
 
 exports.createProduct = async (req, res) => {
   try {
-    const product = new Product(req.body);
-    await product.save();
-    
-    const productObj = product.toObject();
-    productObj.discountedPrice = product.discountedPrice;
-    productObj.hasDiscount = product.hasDiscount;
-    
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const product = new Product(req.body);
+      await product.save();
+
+      const productObj = product.toObject();
+      productObj.discountedPrice = product.discountedPrice;
+      productObj.hasDiscount = product.hasDiscount;
+
+      return res.status(201).json({
+        success: true,
+        data: productObj
+      });
+    }
+
+    // Fallback to JSON file
+    const db = await readDb();
+    const newProduct = {
+      id: db.products.length > 0 ? Math.max(...db.products.map(p => p.id)) + 1 : 1,
+      ...req.body,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    db.products.push(newProduct);
+    await writeDb(db);
+
+    const productData = convertJsonToMongoFormat(newProduct);
+    productData.discountedPrice = productData.discount > 0 ?
+      productData.price - (productData.price * productData.discount / 100) :
+      productData.price;
+    productData.hasDiscount = productData.discount > 0;
+
     res.status(201).json({
       success: true,
-      data: productObj
+      data: productData
     });
   } catch (error) {
-    res.status(500).json({ 
+    console.error('Error in createProduct:', error);
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
 
 exports.updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    
-    if (!product) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Product not found' 
+    const { id } = req.params;
+
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const product = await Product.findByIdAndUpdate(
+        id,
+        req.body,
+        { new: true, runValidators: true }
+      );
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+
+      const productObj = product.toObject();
+      productObj.discountedPrice = product.discountedPrice;
+      productObj.hasDiscount = product.hasDiscount;
+
+      return res.json({
+        success: true,
+        data: productObj
       });
     }
-    
-    const productObj = product.toObject();
-    productObj.discountedPrice = product.discountedPrice;
-    productObj.hasDiscount = product.hasDiscount;
-    
+
+    // Fallback to JSON file
+    const db = await readDb();
+    const index = db.products.findIndex(p => p.id === parseInt(id) || p._id === id);
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    db.products[index] = {
+      ...db.products[index],
+      ...req.body,
+      id: parseInt(id),
+      updatedAt: new Date().toISOString()
+    };
+    await writeDb(db);
+
+    const productData = convertJsonToMongoFormat(db.products[index]);
+    productData.discountedPrice = productData.discount > 0 ?
+      productData.price - (productData.price * productData.discount / 100) :
+      productData.price;
+    productData.hasDiscount = productData.discount > 0;
+
     res.json({
       success: true,
-      data: productObj
+      data: productData
     });
   } catch (error) {
-    res.status(500).json({ 
+    console.error('Error in updateProduct:', error);
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
 
 exports.patchProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true, runValidators: true }
-    );
-    
-    if (!product) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Product not found' 
+    const { id } = req.params;
+
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const product = await Product.findByIdAndUpdate(
+        id,
+        { $set: req.body },
+        { new: true, runValidators: true }
+      );
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+
+      const productObj = product.toObject();
+      productObj.discountedPrice = product.discountedPrice;
+      productObj.hasDiscount = product.hasDiscount;
+
+      return res.json({
+        success: true,
+        data: productObj
       });
     }
-    
-    const productObj = product.toObject();
-    productObj.discountedPrice = product.discountedPrice;
-    productObj.hasDiscount = product.hasDiscount;
-    
+
+    // Fallback to JSON file
+    const db = await readDb();
+    const index = db.products.findIndex(p => p.id === parseInt(id) || p._id === id);
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    db.products[index] = {
+      ...db.products[index],
+      ...req.body,
+      updatedAt: new Date().toISOString()
+    };
+    await writeDb(db);
+
+    const productData = convertJsonToMongoFormat(db.products[index]);
+    productData.discountedPrice = productData.discount > 0 ?
+      productData.price - (productData.price * productData.discount / 100) :
+      productData.price;
+    productData.hasDiscount = productData.discount > 0;
+
     res.json({
       success: true,
-      data: productObj
+      data: productData
     });
   } catch (error) {
-    res.status(500).json({ 
+    console.error('Error in patchProduct:', error);
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
 
 exports.deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Product not found' 
+    const { id } = req.params;
+
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const product = await Product.findByIdAndDelete(id);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: 'Product deleted successfully',
+        data: product
       });
     }
-    
-    res.json({ 
+
+    // Fallback to JSON file
+    const db = await readDb();
+    const index = db.products.findIndex(p => p.id === parseInt(id) || p._id === id);
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    const deleted = db.products.splice(index, 1);
+    await writeDb(db);
+
+    res.json({
       success: true,
       message: 'Product deleted successfully',
-      data: product
+      data: deleted[0]
     });
   } catch (error) {
-    res.status(500).json({ 
+    console.error('Error in deleteProduct:', error);
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -311,21 +555,21 @@ exports.rateProduct = async (req, res) => {
     const { rating, comment } = req.body;
     const { id } = req.params;
     const userId = req.user?.id || req.body.userId; // Get from auth middleware or body
-    
+
     if (!userId) {
       return res.status(400).json({
         success: false,
         message: 'User ID is required'
       });
     }
-    
+
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({
         success: false,
         message: 'Rating must be between 1 and 5'
       });
     }
-    
+
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({
@@ -333,13 +577,13 @@ exports.rateProduct = async (req, res) => {
         message: 'Product not found'
       });
     }
-    
+
     await product.addRating(userId, rating, comment);
-    
+
     const productObj = product.toObject();
     productObj.discountedPrice = product.discountedPrice;
     productObj.hasDiscount = product.hasDiscount;
-    
+
     res.json({
       success: true,
       message: 'Rating added successfully',
@@ -414,14 +658,14 @@ exports.rateProduct = async (req, res) => {
 exports.getProductRatings = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('ratings.userId', 'name email');
-    
+
     if (!product) {
       return res.status(404).json({
         success: false,
         message: 'Product not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -485,20 +729,20 @@ exports.incrementSales = async (req, res) => {
   try {
     const { quantity = 1 } = req.body;
     const product = await Product.findById(req.params.id);
-    
+
     if (!product) {
       return res.status(404).json({
         success: false,
         message: 'Product not found'
       });
     }
-    
+
     await product.incrementSales(quantity);
-    
+
     const productObj = product.toObject();
     productObj.discountedPrice = product.discountedPrice;
     productObj.hasDiscount = product.hasDiscount;
-    
+
     res.json({
       success: true,
       message: 'Sales count updated successfully',
@@ -539,16 +783,41 @@ exports.incrementSales = async (req, res) => {
  */
 exports.getDiscountedProducts = async (req, res) => {
   try {
-    const products = await Product.find({ 
-      discount: { $gt: 0 },
-      isActive: true 
-    }).sort({ discount: -1 });
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const products = await Product.find({ 
+        discount: { $gt: 0 },
+        isActive: true 
+      }).sort({ discount: -1 });
+      
+      const productsWithVirtuals = products.map(product => {
+        const productObj = product.toObject();
+        productObj.discountedPrice = product.discountedPrice;
+        productObj.hasDiscount = product.hasDiscount;
+        return productObj;
+      });
+      
+      return res.json({
+        success: true,
+        data: productsWithVirtuals,
+        count: productsWithVirtuals.length
+      });
+    }
+    
+    // Fallback to JSON file
+    const db = await readDb();
+    const products = (db.products || []).filter(p => p.discount && p.discount > 0);
+    products.sort((a, b) => (b.discount || 0) - (a.discount || 0));
     
     const productsWithVirtuals = products.map(product => {
-      const productObj = product.toObject();
-      productObj.discountedPrice = product.discountedPrice;
-      productObj.hasDiscount = product.hasDiscount;
-      return productObj;
+      const productData = convertJsonToMongoFormat(product);
+      return {
+        ...productData,
+        discountedPrice: productData.discount > 0 ? 
+          productData.price - (productData.price * productData.discount / 100) : 
+          productData.price,
+        hasDiscount: productData.discount > 0
+      };
     });
     
     res.json({
@@ -557,6 +826,7 @@ exports.getDiscountedProducts = async (req, res) => {
       count: productsWithVirtuals.length
     });
   } catch (error) {
+    console.error('Error in getDiscountedProducts:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -599,18 +869,50 @@ exports.getDiscountedProducts = async (req, res) => {
 exports.getTopRatedProducts = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const products = await Product.find({ 
-      averageRating: { $gt: 0 },
-      isActive: true 
-    })
-    .sort({ averageRating: -1, ratingCount: -1 })
-    .limit(parseInt(limit));
+    
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const products = await Product.find({ 
+        averageRating: { $gt: 0 },
+        isActive: true 
+      })
+      .sort({ averageRating: -1, ratingCount: -1 })
+      .limit(parseInt(limit));
+      
+      const productsWithVirtuals = products.map(product => {
+        const productObj = product.toObject();
+        productObj.discountedPrice = product.discountedPrice;
+        productObj.hasDiscount = product.hasDiscount;
+        return productObj;
+      });
+      
+      return res.json({
+        success: true,
+        data: productsWithVirtuals,
+        count: productsWithVirtuals.length
+      });
+    }
+    
+    // Fallback to JSON file
+    const db = await readDb();
+    let products = (db.products || []).filter(p => p.averageRating && p.averageRating > 0);
+    products.sort((a, b) => {
+      if (b.averageRating !== a.averageRating) {
+        return b.averageRating - a.averageRating;
+      }
+      return (b.ratingCount || 0) - (a.ratingCount || 0);
+    });
+    products = products.slice(0, parseInt(limit));
     
     const productsWithVirtuals = products.map(product => {
-      const productObj = product.toObject();
-      productObj.discountedPrice = product.discountedPrice;
-      productObj.hasDiscount = product.hasDiscount;
-      return productObj;
+      const productData = convertJsonToMongoFormat(product);
+      return {
+        ...productData,
+        discountedPrice: productData.discount > 0 ? 
+          productData.price - (productData.price * productData.discount / 100) : 
+          productData.price,
+        hasDiscount: productData.discount > 0
+      };
     });
     
     res.json({
@@ -619,6 +921,7 @@ exports.getTopRatedProducts = async (req, res) => {
       count: productsWithVirtuals.length
     });
   } catch (error) {
+    console.error('Error in getTopRatedProducts:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -661,18 +964,45 @@ exports.getTopRatedProducts = async (req, res) => {
 exports.getBestSellingProducts = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const products = await Product.find({ 
-      salesCount: { $gt: 0 },
-      isActive: true 
-    })
-    .sort({ salesCount: -1 })
-    .limit(parseInt(limit));
+    
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      const products = await Product.find({ 
+        salesCount: { $gt: 0 },
+        isActive: true 
+      })
+      .sort({ salesCount: -1 })
+      .limit(parseInt(limit));
+      
+      const productsWithVirtuals = products.map(product => {
+        const productObj = product.toObject();
+        productObj.discountedPrice = product.discountedPrice;
+        productObj.hasDiscount = product.hasDiscount;
+        return productObj;
+      });
+      
+      return res.json({
+        success: true,
+        data: productsWithVirtuals,
+        count: productsWithVirtuals.length
+      });
+    }
+    
+    // Fallback to JSON file
+    const db = await readDb();
+    let products = (db.products || []).filter(p => p.salesCount && p.salesCount > 0);
+    products.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
+    products = products.slice(0, parseInt(limit));
     
     const productsWithVirtuals = products.map(product => {
-      const productObj = product.toObject();
-      productObj.discountedPrice = product.discountedPrice;
-      productObj.hasDiscount = product.hasDiscount;
-      return productObj;
+      const productData = convertJsonToMongoFormat(product);
+      return {
+        ...productData,
+        discountedPrice: productData.discount > 0 ? 
+          productData.price - (productData.price * productData.discount / 100) : 
+          productData.price,
+        hasDiscount: productData.discount > 0
+      };
     });
     
     res.json({
@@ -681,6 +1011,7 @@ exports.getBestSellingProducts = async (req, res) => {
       count: productsWithVirtuals.length
     });
   } catch (error) {
+    console.error('Error in getBestSellingProducts:', error);
     res.status(500).json({
       success: false,
       message: error.message
