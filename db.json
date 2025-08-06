@@ -71,7 +71,7 @@
     {
       "id": 5,
       "name": "قهوه سیاه بن مانو مدل گلد 250 گرمی",
-      "price": "105000",
+      "price": "0",
       "discount": 0,
       "description": "قهوه سیاه با عطر و طعم قوی و دلپذیر",
       "image": "/images/products/p5.png",
@@ -122,7 +122,7 @@
     {
       "id": 8,
       "name": "قهوه اولانگ بن مانو مدل سلکت 250 گرمی",
-      "price": "115000",
+      "price": "0",
       "discount": 0,
       "description": "قهوه اولانگ با عطر و طعم قوی و دلپذیر",
       "image": "/images/products/p8.png",
@@ -173,7 +173,7 @@
     {
       "id": 11,
       "name": "قهوه اسپرسو کلاسیک 1 کیلوگرمی",
-      "price": "320000",
+      "price": "0",
       "discount": 18,
       "description": "قهوه اسپرسو کلاسیک مناسب برای دستگاه اسپرسوساز.",
       "image": "/images/products/p11.png",
@@ -207,7 +207,7 @@
     {
       "id": 13,
       "name": "قهوه فوری گلد 200 گرمی",
-      "price": "78000",
+      "price": "0",
       "discount": 9,
       "description": "قهوه فوری با حل شوندگی سریع و طعم عالی.",
       "image": "/images/products/p13.png",
@@ -275,7 +275,7 @@
     {
       "id": 17,
       "name": "قهوه دارک روست 500 گرمی",
-      "price": "175000",
+      "price": "0",
       "discount": 14,
       "description": "قهوه دارک روست با تلخی ملایم و عطر دودی.",
       "image": "/images/products/p17.png",
@@ -326,7 +326,7 @@
     {
       "id": 20,
       "name": "قهوه اسپرسو روبوستا 250 گرمی",
-      "price": "125000",
+      "price": "0",
       "discount": 11,
       "description": "قهوه اسپرسو با دانه‌های روبوستا و کافئین بالا.",
       "image": "/images/products/p20.png",
@@ -394,7 +394,7 @@
     {
       "id": 24,
       "name": "قهوه اسپرسو لایت 250 گرمی",
-      "price": "120000",
+      "price": "0",
       "discount": 10,
       "description": "قهوه اسپرسو لایت با اسیدیته بالا و طعم میوه‌ای.",
       "image": "/images/products/p24.png",
@@ -462,7 +462,7 @@
     {
       "id": 28,
       "name": "قهوه اسپرسو گلد 250 گرمی",
-      "price": "155000",
+      "price": "0",
       "discount": 0,
       "description": "قهوه اسپرسو گلد با کیفیت ممتاز و طعم متعادل.",
       "image": "/images/products/p28.png",
