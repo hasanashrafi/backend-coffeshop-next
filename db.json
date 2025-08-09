@@ -122,8 +122,8 @@
     {
       "id": 5,
       "name": "دستگاه اسپرسو ساز خانگی دلونگی",
-      "price": "2850000",
-      "discount": 5,
+      "price": "0",
+      "discount": 0,
       "description": "دستگاه اسپرسو ساز حرفه‌ای برای استفاده خانگی",
       "image": "/images/products/p5.png",
       "category": "espresso-makers",
@@ -140,7 +140,7 @@
     {
       "id": 6,
       "name": "هات چاکلت پریمیوم 200 گرمی",
-      "price": "95000",
+      "price": "0",
       "discount": 0,
       "description": "هات چاکلت فوری با طعم شکلات بلژیکی",
       "image": "/images/products/p6.png",
@@ -176,7 +176,7 @@
     {
       "id": 8,
       "name": "فیلتر کاغذی اسپرسو ساز بسته 100 عددی",
-      "price": "45000",
+      "price": "0",
       "discount": 0,
       "description": "فیلتر کاغذی مخصوص دستگاه‌های اسپرسو ساز",
       "image": "/images/products/p8.png",
@@ -194,7 +194,7 @@
     {
       "id": 9,
       "name": "قهوه عربیکا اتیوپی 500 گرمی",
-      "price": "185000",
+      "price": "0",
       "discount": 0,
       "description": "قهوه عربیکا تک خاستگاه از اتیوپی با طعم میوه‌ای",
       "image": "/images/products/p9.png",
@@ -248,7 +248,7 @@
     {
       "id": 12,
       "name": "قهوه ترک ممتاز 500 گرمی",
-      "price": "165000",
+      "price": "0",
       "discount": 0,
       "description": "قهوه ترک با آسیاب ریز و طعم اصیل استانبولی",
       "image": "/images/products/p12.png",
@@ -284,7 +284,7 @@
     {
       "id": 14,
       "name": "قهوه کلمبیا سوپریمو 250 گرمی",
-      "price": "210000",
+      "price": "0",
       "discount": 0,
       "description": "قهوه کلمبیا تک خاستگاه با طعم گل و میوه",
       "image": "/images/products/p14.png",
