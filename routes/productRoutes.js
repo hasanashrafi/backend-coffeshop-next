@@ -6,6 +6,7 @@ const productController = require('../controllers/productController');
 router.get('/discounted/all', productController.getDiscountedProducts);
 router.get('/top-rated/all', productController.getTopRatedProducts);
 router.get('/best-selling/all', productController.getBestSellingProducts);
+router.get('/category/:categorySlug', productController.getProductsByCategory);
 
 // Basic CRUD operations
 router.get('/', productController.getAllProducts);

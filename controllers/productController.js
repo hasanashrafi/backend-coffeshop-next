@@ -1017,4 +1017,190 @@ exports.getBestSellingProducts = async (req, res) => {
       message: error.message
     });
   }
+};
+
+/**
+ * @swagger
+ * /api/products/category/{categorySlug}:
+ *   get:
+ *     summary: Get products by category
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: categorySlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Category slug
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of products per page
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           default: name
+ *         description: Sort field
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Sort order
+ *     responses:
+ *       200:
+ *         description: Products by category retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     products:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Product'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         currentPage:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                         totalProducts:
+ *                           type: integer
+ *                         hasNext:
+ *                           type: boolean
+ *                         hasPrev:
+ *                           type: boolean
+ *       404:
+ *         description: Category not found
+ *       500:
+ *         description: Server error
+ */
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    const { categorySlug } = req.params;
+    const { page = 1, limit = 10, sort = 'name', order = 'asc' } = req.query;
+    
+    // Try MongoDB first
+    if (isMongoConnected()) {
+      let query = { 
+        category: categorySlug,
+        isActive: true 
+      };
+
+      // Build sort object
+      let sortObj = {};
+      if (sort) {
+        sortObj[sort] = order === 'desc' ? -1 : 1;
+      } else {
+        sortObj.createdAt = -1; // Default sort
+      }
+
+      const skip = (page - 1) * limit;
+      const products = await Product.find(query)
+        .sort(sortObj)
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const totalProducts = await Product.countDocuments(query);
+
+      if (products.length > 0) {
+        const productsWithVirtuals = products.map(product => {
+          const productObj = product.toObject();
+          productObj.discountedPrice = product.discountedPrice;
+          productObj.hasDiscount = product.hasDiscount;
+          return productObj;
+        });
+
+        return res.json({
+          success: true,
+          data: {
+            products: productsWithVirtuals,
+            pagination: {
+              currentPage: parseInt(page),
+              totalPages: Math.ceil(totalProducts / limit),
+              totalProducts,
+              hasNext: skip + parseInt(limit) < totalProducts,
+              hasPrev: page > 1
+            }
+          }
+        });
+      }
+    }
+
+    // Fallback to JSON file
+    const db = await readDb();
+    let products = (db.products || []).filter(p => 
+      p.category === categorySlug && p.isActive
+    );
+
+    // Sort products
+    products.sort((a, b) => {
+      let aValue = a[sort] || '';
+      let bValue = b[sort] || '';
+      
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+      
+      if (order === 'desc') {
+        return bValue > aValue ? 1 : -1;
+      }
+      return aValue > bValue ? 1 : -1;
+    });
+
+    // Pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + parseInt(limit);
+    const paginatedProducts = products.slice(startIndex, endIndex);
+
+    // Add virtual fields
+    const productsWithVirtuals = paginatedProducts.map(product => {
+      const productData = convertJsonToMongoFormat(product);
+      return {
+        ...productData,
+        discountedPrice: productData.discount > 0 ?
+          productData.price - (productData.price * productData.discount / 100) :
+          productData.price,
+        hasDiscount: productData.discount > 0
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        products: productsWithVirtuals,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(products.length / limit),
+          totalProducts: products.length,
+          hasNext: endIndex < products.length,
+          hasPrev: startIndex > 0
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error in getProductsByCategory:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 }; 
