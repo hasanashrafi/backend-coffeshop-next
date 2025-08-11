@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 
+// Handle OPTIONS requests for all product routes
+router.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  res.status(200).end();
+});
+
 // Test endpoint that doesn't require database
 router.get('/test', (req, res) => {
   res.json({
