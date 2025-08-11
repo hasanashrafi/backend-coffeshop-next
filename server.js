@@ -16,45 +16,19 @@ const connectDB = require('./db/connect');
 const app = express();
 const PORT = process.env.PORT || 3004;
 
-// Robust CORS setup for multiple origins
-const allowedOrigins = [
-  'http://localhost:3000', // Local React/Next frontend
-  'http://127.0.0.1:3000',
-  'https://backend-coffeshop-node.onrender.com', // Your Render backend (for Swagger UI, etc.)
-  'https://your-frontend-domain.com', // <-- Add your deployed frontend domain here!
-];
-
+// Simplified and robust CORS setup
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      return callback(null, false); // Changed from Error to false for better handling
-    }
-  },
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  optionsSuccessStatus: 200, // Changed from 204 to 200
-  preflightContinue: false,
-  maxAge: 86400 // Cache preflight for 24 hours
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 };
 
-// Apply CORS before any other middleware
+// Apply CORS middleware first
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-
-// Additional CORS headers for all responses
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
 app.use(express.json());
 app.use(morgan('dev'));
 

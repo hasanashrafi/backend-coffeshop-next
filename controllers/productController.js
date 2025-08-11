@@ -61,6 +61,7 @@ const readDb = async () => {
     return JSON.parse(data);
   } catch (error) {
     console.error('Error reading db.json:', error);
+    console.log('Creating default db.json structure');
     return { products: [] };
   }
 };
@@ -103,6 +104,7 @@ const convertJsonToMongoFormat = (jsonProduct) => {
 // Controller functions
 exports.getAllProducts = async (req, res) => {
   try {
+    console.log('getAllProducts called with query:', req.query);
     const { category, hasDiscount, minRating, sortBy, sortOrder = 'asc' } = req.query;
 
     // Try MongoDB first
@@ -208,9 +210,11 @@ exports.getAllProducts = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getAllProducts:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Failed to fetch products',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };
