@@ -31,17 +31,30 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     } else {
-      return callback(new Error('Not allowed by CORS'));
+      console.log('CORS blocked origin:', origin);
+      return callback(null, false); // Changed from Error to false for better handling
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  optionsSuccessStatus: 204
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200, // Changed from 204 to 200
+  preflightContinue: false,
+  maxAge: 86400 // Cache preflight for 24 hours
 };
 
+// Apply CORS before any other middleware
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
+
+// Additional CORS headers for all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -91,6 +104,16 @@ app.use('/api/dashboard', userDashboardRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
+
+  // Handle CORS errors specifically
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({
+      success: false,
+      message: 'CORS policy violation',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    });
+  }
+
   res.status(500).json({
     success: false,
     message: 'Something went wrong!',

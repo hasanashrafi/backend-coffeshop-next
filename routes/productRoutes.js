@@ -2,6 +2,15 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 
+// Handle preflight requests for all product routes
+router.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.status(200).end();
+});
+
 // Special product lists (must come before :id routes)
 router.get('/discounted/all', productController.getDiscountedProducts);
 router.get('/top-rated/all', productController.getTopRatedProducts);
